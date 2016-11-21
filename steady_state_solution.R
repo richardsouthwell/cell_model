@@ -39,11 +39,11 @@ p <- function(m0) {
     # Calculate e(x)
     ep <- (k+m)/g
     # First calculate for x <= xp
-    es <- rev(cumsum(rev(ep[x<=xp])))
+    es <- rev(cumsum(rev(ep[x<xp])))
     # then for x > xp
     el <- -cumsum(ep[x>xp])
     # and put the results together
-    e <- exp(c(es, el)*dx)
+    e <- exp(c(es, 0, el)*dx)
     
     # Calculate h(x)
     hp <- k*e/g
