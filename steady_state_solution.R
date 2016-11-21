@@ -3,7 +3,9 @@ a <- 0.7; b <- 0.5;
 alpha <- 0.85; beta <- 1;
 xa <- 0.7;  # threshold for duplication
 delta <- 0.2  # width of offspring size distribution
+
 xp <- 0.5 + delta/2  # x_+ is maximum size of offspring
+xmin <- xa*(1-delta)/2  # Smallest possible cell size
 
 # Choose width of size brackets
 dx <- 0.0005
@@ -22,7 +24,7 @@ q <- function(x) {
 # Use a k that stays finite but is large enough to ensure that
 # almost all cells duplicate before reaching x=1
 k <- 4000*(x-xa)^4#/(1-x+0.01)
-k[1:(xa/dx)] <- 0
+k[x<xa] <- 0
 
 # Define function that calculates Psi given
 # a particular mortality rate constant m0
@@ -36,16 +38,16 @@ p <- function(m0) {
     
     # Calculate e(x)
     ep <- (k+m)/g
-    # First calculate for x < xp
-    es <- rev(cumsum(rev(ep[1:(xp/dx)])))
+    # First calculate for x <= xp
+    es <- rev(cumsum(rev(ep[x<=xp])))
     # then for x > xp
-    el <- -cumsum(ep[(xp/dx+1):length(ep)])
+    el <- -cumsum(ep[x>xp])
     # and put the results together
     e <- exp(c(es, el)*dx)
     
     # Calculate h(x)
     hp <- k*e/g
-    hp[1:(xa/dx)] <- 0
+    hp[x<xa] <- 0
     h <- rep_len(0, length(x))
     for (i in 1:length(x)) {
         h[i] <- 2*sum(hp*q(x[i]/x)/x)*dx
