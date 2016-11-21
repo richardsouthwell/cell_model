@@ -9,7 +9,7 @@ xmin <- xa*(1-delta)/2  # Smallest possible cell size
 
 # Choose width of size brackets
 dx <- 0.0005
-x <- seq(dx, 1, dx)
+x <- seq(xmin, 1, dx)
 
 # Growth rate
 g <- a*x^alpha-b*x^beta
@@ -68,12 +68,7 @@ m0 <- uniroot(function(m0) p(m0)[[2]]-1, lower=0.05, upper=10)[["root"]]
 
 # Calculate the solution
 psi <- p(m0)[[1]]
-# and plot it in the range where cells can exist
-xmin <- xa*(1-delta)/2
-plotrange <- (xmin/dx):length(x)
 par(mar=c(5,5,1,1))
-plot(x[plotrange], 
-     psi[plotrange], 
-     type="l", lwd=3,
+plot(x, psi, type="l", lwd=3,
      xlab="x", ylab=expression(Psi(x)))
 
