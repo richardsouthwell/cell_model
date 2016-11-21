@@ -1,13 +1,24 @@
+# Eventually I want to make this code work with log-sized steps
+# and to use spectral methods to do the Q integral.
+# But there are some issues to resolve
+
 # Set parameters
 a <- 0.7; b <- 0.5; 
 alpha <- 0.85; beta <- 1;
 xa <- 0.7;  # threshold for duplication
 delta <- 0.2  # width of offspring size distribution
-xp <- 0.5 + delta/2  # x_+ is maximum size of offspring
 
-# Choose width of size brackets
-dx <- 0.0005
-x <- seq(dx, 1, dx)
+xp <- 0.5 + delta/2  # x_+ is maximum size of offspring
+xmin <- xa*(1-delta)/2  # Smallest possible cell size
+
+# TODO: I want to make sure that there is no discontinuity
+# at x=xp. So probably I need to make sure that xp is at one of
+# the steps.
+Nx <- 16  # Choose number of steps
+x <- seq(xmin, 1, length.out = Nx+1)
+## Uncomment to Make steps equally sized in log size
+#y <- seq(log(xmin), 0, length.out = Nx+1)
+#x <- exp(y)
 
 # Growth rate
 g <- a*x^alpha-b*x^beta
@@ -22,7 +33,7 @@ q <- function(x) {
 # Use a k that stays finite but is large enough to ensure that
 # almost all cells duplicate before reaching x=1
 k <- 4000*(x-xa)^4#/(1-x+0.01)
-k[1:(xa/dx)] <- 0
+k[x<xa] <- 0
 
 # Define function that calculates Psi given
 # a particular mortality rate constant m0
@@ -36,16 +47,16 @@ p <- function(m0) {
     
     # Calculate e(x)
     ep <- (k+m)/g
-    # First calculate for x < xp
-    es <- rev(cumsum(rev(ep[1:(xp/dx)])))
+    # First calculate for x <= xp
+    es <- rev(cumsum(rev(ep[x<=xp])))
     # then for x > xp
-    el <- -cumsum(ep[(xp/dx+1):length(ep)])
+    el <- -cumsum(ep[x>xp])
     # and put the results together
     e <- exp(c(es, el)*dx)
     
     # Calculate h(x)
     hp <- k*e/g
-    hp[1:(xa/dx)] <- 0
+    hp[x<xa] <- 0
     h <- rep_len(0, length(x))
     for (i in 1:length(x)) {
         h[i] <- 2*sum(hp*q(x[i]/x)/x)*dx
