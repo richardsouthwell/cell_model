@@ -2,11 +2,23 @@
 # and to use spectral methods to do the Q integral.
 # But there are some issues to resolve
 
-# Use trapezoidal rule for integration
 intx <- function(f, x) {
+    # Use trapezoidal rule for integration
+    #
+    # Args:
+    #   f: value of function at points given by x
+    #   x: the points at which the function values are given. Needs to be in
+    #      either increasing or decreasing order.
+    #
+    # Returns:
+    #   vector of values of integral over f at points given by x
+    #
+    # The integration starts at the first value in x, so first
+    # value in the returned vector is zero.
+
     idx <- 1:(length(f)-1)
     dx <- abs(diff(x))
-    return(cumsum((f[idx]+f[idx+1])*dx[idx]/2))
+    return(c(0,cumsum((f[idx]+f[idx+1])*dx[idx]/2)))
 }
 
 # Set parameters
@@ -18,14 +30,14 @@ delta <- 0.2  # width of offspring size distribution
 xp <- 0.5 + delta/2  # x_+ is maximum size of offspring
 xmin <- xa*(1-delta)/2  # Smallest possible cell size
 
-# Choose width of size brackets
-dx <- 0.0005
-x <- seq(xmin, 1, dx)
-#Nx <- 16  # Choose number of steps
-#x <- seq(xmin, 1, length.out = Nx+1)
-## Uncomment to Make steps equally sized in log size
-#y <- seq(log(xmin), 0, length.out = Nx+1)
-#x <- exp(y)
+Nx <- 1440  # Choose number of steps
+uselog <- TRUE
+if (uselog) {
+    y <- seq(log(xmin), 0, length.out = Nx+1)
+    x <- exp(y)
+} else {
+    x <- seq(xmin, 1, length.out = Nx+1)
+}
 
 # We will shift x to make sure it includes the point xp
 x <- x - min(x[x>=xp]) + xp
@@ -33,8 +45,8 @@ x <- x - min(x[x>=xp]) + xp
 # Growth rate
 g <- a*x^alpha-b*x^beta
 
-# Make q nonzero only between (1-delta)/2 and (1+delta)/2
 q <- function(x) {
+    # Make q nonzero only between (1-delta)/2 and (1+delta)/2
     qr <- rep(0, length(x))
     qr[abs(x-0.5)<delta/2] <- 1/delta
     return(qr)
@@ -45,12 +57,15 @@ q <- function(x) {
 k <- 4000*(x-xa)^4#/(1-x+0.01)
 k[x<xa] <- 0
 
-# Define function that calculates Psi given
-# a particular mortality rate constant m0
-#
-# The function returns the Psi and the integral
-# over h/e that needs to be equal to 1
 p <- function(m0) {
+    # Calculate the steady-state solution
+    #
+    # Args:
+    #   m0: scalar giving the constant mortality rate
+    #
+    # Returns:
+    #   List containing the solution and the integral over h/e 
+    #   For the correct value of m0 that integral will be equal to 1
     
     # Use constant mortality 
     m <- rep_len(m0, length(x))
@@ -59,25 +74,25 @@ p <- function(m0) {
     ep <- (k+m)/g
     # First calculate for x < xp
     es <- rev(intx(rev(ep[x<=xp]), rev(x[x<=xp])))
-    # then for x > xp
+    # then for x >= xp
     el <- -intx(ep[x>=xp], x[x>=xp])
     # and put the results together
-    e <- exp(c(es, 0, el))
+    e <- exp(c(es[-length(es)], el))
     
     # Calculate h(x)
     hp <- k*e/g
     hp[x<xa] <- 0
     h <- rep_len(0, length(x))
     for (i in 1:length(x)) {
-        h[i] <- 2*sum(hp*q(x[i]/x)/x)*dx
+        h[i] <- 2*intx(hp*q(x[i]/x)/x, x)[length(x)-1]
     }
     
     he <- h/e
     he[e==0] <- 0
-    Theta <- c(0, intx(he, x))
+    Theta <- intx(he, x)
     b <- Theta[length(x)]
     
-    Psi <- g[xp/dx]*e*Theta/g
+    Psi <- g[x==xp]*e*Theta/g
     return(list(Psi, b))
 }
 
