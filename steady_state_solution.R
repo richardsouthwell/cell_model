@@ -1,7 +1,3 @@
-# Eventually I want to make this code work with log-sized steps
-# and to use spectral methods to do the Q integral.
-# But there are some issues to resolve
-
 intx <- function(f, x) {
     # Use trapezoidal rule for integration
     #
@@ -80,6 +76,8 @@ p <- function(m0) {
     e <- exp(c(es[-length(es)], el))
     
     # Calculate h(x)
+    # TODO: Want to convert this to using spectral methods when the steps
+    # are logarithmic
     hp <- k*e/g
     hp[x<xa] <- 0
     h <- rep_len(0, length(x))
@@ -87,21 +85,28 @@ p <- function(m0) {
         h[i] <- 2*intx(hp*q(x[i]/x)/x, x)[length(x)-1]
     }
     
+    # Calculate Theta in eq.(4.21). Because h/e is zero beyond x=xp, we simply
+    # integrate up to x=1. Then Theta is automatically 1 for x>xp when the
+    # boundary condition (4.18) is satisfied.
     he <- h/e
-    he[e==0] <- 0
-    Theta <- intx(he, x)
+    he[e==0] <- 0  # Removes the infinity from division by zero
+    Theta <- intx(he, x) 
+    # The boundary condition (4.18) is satisfied iff b=1
     b <- Theta[length(x)]
     
+    # Use eq.(4.20) to calculate the solution.
     Psi <- g[x==xp]*e*Theta/g
+    
     return(list(Psi, b))
 }
 
-# Find the duplication rate constant that satisfies the
-# boundary condition
+# Find the mortality rate constant that satisfies the boundary condition
+# in eq. (4.18)
 m0 <- uniroot(function(m0) p(m0)[[2]]-1, lower=0.05, upper=10)[["root"]]
 
 # Calculate the solution
 psi <- p(m0)[[1]]
+# Plot the solution
 par(mar=c(5,5,1,1))
 plot(x, psi, type="l", lwd=3,
      xlab="x", ylab=expression(Psi(x)))
