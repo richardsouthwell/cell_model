@@ -6,7 +6,7 @@
 intx <- function(f, x) {
     idx <- 1:(length(f)-1)
     dx <- abs(diff(x))
-    return(cumsum((f[idx]+f[idx+1])*dx[idx]))
+    return(cumsum((f[idx]+f[idx+1])*dx[idx]/2))
 }
 
 # Set parameters
@@ -62,7 +62,7 @@ p <- function(m0) {
     # then for x > xp
     el <- -intx(ep[x>=xp], x[x>=xp])
     # and put the results together
-    e <- exp(c(es, 0, el)*dx)
+    e <- exp(c(es, 0, el))
     
     # Calculate h(x)
     hp <- k*e/g
