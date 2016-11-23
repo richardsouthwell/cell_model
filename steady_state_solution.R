@@ -58,7 +58,7 @@ p <- function(m0) {
     Theta <- cumsum(he)*dx
     b <- Theta[length(x)]
     
-    Psi <- g[xp/dx]*e*Theta/g
+    Psi <- g[x==xp]*e*Theta/g
     return(list(Psi, b))
 }
 
