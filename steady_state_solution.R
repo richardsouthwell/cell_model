@@ -43,8 +43,14 @@ g <- a*x^alpha-b*x^beta
 
 q <- function(x) {
     # Make q nonzero only between (1-delta)/2 and (1+delta)/2
-    qr <- rep(0, length(x))
-    qr[abs(x-0.5)<delta/2] <- 1/delta
+    # Here we use a smooth bump function
+    qr <- exp(-1/(1-(2/delta*(x-1/2))^2))/0.444
+    qr[abs(x-0.5)>delta/2] <- 0
+    
+    # Use the following two lines if you want a step function
+    # qr <- rep(0, length(x))
+    # qr[abs(x-0.5)<delta/2] <- 1/delta
+    
     return(qr)
 }
 
