@@ -111,3 +111,71 @@ par(mar=c(5,5,1,1))
 plot(x, psi, type="l", lwd=3,
      xlab="x", ylab=expression(Psi(x)))
 
+
+###################### new code addition is below ##################
+
+# Define Q(w,wd) function for computation of birth integral
+
+BigQ <- function(w,wd){
+  if ((wd !=0) & abs((w/wd)-0.5)<delta/2) {
+    1/(delta*wd)
+  } else {
+    0
+  }
+}
+
+BigQList <- function(w){
+  outputt <- rep(0, length(x));
+  for (i in 1:length(x)) {
+    outputt[i] <- BigQ(w,x[i])
+  }
+  return(outputt)
+}
+
+
+#Use Riemann sum to work out birth term
+
+birthpartfun <- function(w){
+  2*dx*sum(k*psi*BigQList(w))
+}
+
+
+birthpartoutput <- rep(0,length(x));
+for (i in 1:length(x)) {
+  birthpartoutput[i] <- birthpartfun(x[i])
+}
+
+#plot(x,birthpartoutput)
+
+#Use central differencing, assuming Z is zero at either end
+
+
+centraldiffwZeroes2 <- function(Z,dx){
+  outputtt <- rep(0,length(Z));
+  for (i in 1:length(Z)) {
+    outputtt[i] <- if (i==1) {
+      0
+    } else {
+      if (i==length(Z)) {
+        0
+      } else {
+        (Z[i+1]-Z[i-1])/(2*dx)
+      }
+    }
+  }
+  return(outputtt)
+}
+
+# compute linear term, growth term (involving derivative), and add them to the birth term integral, and plot the output, which is (d psi/ dt)
+
+linterm <- -k*psi-m0*psi
+
+
+growthterm2 <- -centraldiffwZeroes2(g*psi,dx)
+
+
+DpsiDt <- birthpartoutput+growthterm2+linterm
+
+plot(x,DpsiDt)
+
+
