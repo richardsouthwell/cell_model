@@ -120,68 +120,69 @@ plot(x, psi, type="l", lwd=3,
 
 ###################### new code addition is below ##################
 
-# Define Q(w,wd) function for computation of birth integral
+#Get space step size (this only works when uselog==FALSE)
 
-BigQ <- function(w,wd){
-  if ((wd !=0) & abs((w/wd)-0.5)<delta/2) {
-    1/(delta*wd)
-  } else {
-    0
-  }
-}
-
-BigQList <- function(w){
-  outputt <- rep(0, length(x));
-  for (i in 1:length(x)) {
-    outputt[i] <- BigQ(w,x[i])
-  }
-  return(outputt)
-}
+dx=x[2]-x[1]
 
 
 #Use Riemann sum to work out birth term
 
-birthpartfun <- function(w){
-  2*dx*sum(k*psi*BigQList(w))
-}
+
+birthterm <-sapply(x, function(w) 2*dx*sum(k*psi*sapply(w/x,q)/(x)))
 
 
-birthpartoutput <- rep(0,length(x));
-for (i in 1:length(x)) {
-  birthpartoutput[i] <- birthpartfun(x[i])
-}
 
-#plot(x,birthpartoutput)
+
 
 #Use central differencing, assuming Z is zero at either end
 
 
-centraldiffwZeroes2 <- function(Z,dx){
-  outputtt <- rep(0,length(Z));
-  for (i in 1:length(Z)) {
-    outputtt[i] <- if (i==1) {
-      0
-    } else {
-      if (i==length(Z)) {
-        0
-      } else {
-        (Z[i+1]-Z[i-1])/(2*dx)
-      }
-    }
-  }
-  return(outputtt)
+#centraldiffwZeroes2 <- function(Z,dx){
+#  outputtt <- rep(0,length(Z));
+#  for (i in 1:length(Z)) {
+#    outputtt[i] <- if (i==1) {
+#      0
+#    } else {
+#      if (i==length(Z)) {
+#        0
+#      } else {
+#        (Z[i+1]-Z[i-1])/(2*dx)
+#      }
+#    }
+#  }
+return(outputtt)
 }
 
-# compute linear term, growth term (involving derivative), and add them to the birth term integral, and plot the output, which is (d psi/ dt)
+# compute linear term equal to minus psi(k(w)+m)
 
 linterm <- -k*psi-m0*psi
 
 
-growthterm2 <- -centraldiffwZeroes2(g*psi,dx)
+#Make 4th order differentiation matrix D for computing growth term
+
+NNN=length(x);
+D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
+D <- (D-t(D))/dx;
+
+#Multilply g*psi by D to get growth term
+
+growthterm <- -D %*% (g*psi)
+#Manually set growth term to zero for extreme w values
+
+growthterm[1] <-0
+growthterm[2] <-0
+#growthterm[length(growthterm3)] <-0
+#growthterm[length(growthterm3)-1] <-0
+
+#growthterm[length(growthterm3)-2] <-0
+#growthterm[length(growthterm3)-3] <-0
 
 
-DpsiDt <- birthpartoutput+growthterm2+linterm
+#note since it is a 4th order method, it may not be handelling the boundaries properly
+
+
+#pde rhs is sum of birth, growth and linear terms
+
+DpsiDt <- birthterm+growthterm+linterm
 
 plot(x,DpsiDt)
-
-
