@@ -1,3 +1,5 @@
+library("Matrix")
+
 intx <- function(f, x) {
     # Use trapezoidal rule for integration
     #
@@ -11,7 +13,7 @@ intx <- function(f, x) {
     #
     # The integration starts at the first value in x, so first
     # value in the returned vector is zero.
-
+    
     idx <- 1:(length(f)-1)
     dx <- abs(diff(x))
     return(c(0,cumsum((f[idx]+f[idx+1])*dx[idx]/2)))
@@ -27,7 +29,7 @@ xp <- 0.5 + delta/2  # x_+ is maximum size of offspring
 xmin <- xa*(1-delta)/2  # Smallest possible cell size
 
 Nx <- 1440  # Choose number of steps
-uselog <- TRUE
+uselog <- FALSE
 if (uselog) {
     y <- seq(log(xmin), 0, length.out = Nx+1)
     x <- exp(y)
@@ -56,7 +58,7 @@ q <- function(x) {
 
 # Use a k that stays finite but is large enough to ensure that
 # almost all cells duplicate before reaching x=1
-k <- 4000*(x-xa)^4#/(1-x+0.01)
+k <- 10000*(x-xa)^4#/(1-x+0.01)
 k[x<xa] <- 0
 
 p <- function(m0) {
@@ -150,8 +152,8 @@ birthterm <-sapply(x, function(w) 2*dx*sum(k*psi*sapply(w/x,q)/(x)))
 #      }
 #    }
 #  }
-return(outputtt)
-}
+#return(outputtt)
+#}
 
 # compute linear term equal to minus psi(k(w)+m)
 
