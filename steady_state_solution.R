@@ -212,8 +212,7 @@ dxlog=xvals[2]-xvals[1]
 # Really I should discard the last term when computing Riemann sum, but I think
 # this term is zero anyway
 
-birthlogRiemann=sapply(xvals, function(xchosen) 2*dxlog*sum(k*psi*sapply(exp(xchosen-xvals),q)))
-plot(exp(xvals),birthlogRiemann)
+birthlogRiemann=sapply(x, function(xchosen) 2*dxlog*sum(k*psi*q(xchosen/x)))
 
 plot(x, birthlogRiemann, type="l")
 
