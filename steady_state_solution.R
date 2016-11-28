@@ -29,16 +29,21 @@ xp <- 0.5 + delta/2  # x_+ is maximum size of offspring
 xmin <- xa*(1-delta)/2  # Smallest possible cell size
 
 Nx <- 1440  # Choose number of steps
-uselog <- FALSE
+uselog <- TRUE
 if (uselog) {
     y <- seq(log(xmin), 0, length.out = Nx+1)
+    # We will shift x to make sure it includes the point xp
+    # y <- y - min(y[y>=log(xp)]) + log(xp)
     x <- exp(y)
+    x <- x/min(x[x>=xp])*xp
+    
 } else {
     x <- seq(xmin, 1, length.out = Nx+1)
+    # We will shift x to make sure it includes the point xp
+    x <- x - min(x[x>=xp]) + xp
 }
 
-# We will shift x to make sure it includes the point xp
-x <- x - min(x[x>=xp]) + xp
+
 
 # Growth rate
 g <- a*x^alpha-b*x^beta
@@ -46,8 +51,14 @@ g <- a*x^alpha-b*x^beta
 q <- function(x) {
     # Make q nonzero only between (1-delta)/2 and (1+delta)/2
     # Here we use a smooth bump function
+    #qr <- exp(-1/(1-(2/delta*(x-1/2))^2))/0.444*2/delta
+    #qr[abs(x-0.5)>delta/2] <- 0
+    
     qr <- exp(-1/(1-(2/delta*(x-1/2))^2))/0.444*2/delta
-    qr[abs(x-0.5)>delta/2] <- 0
+    qr[abs(x-0.5)>=delta/2] <- 0
+    
+    #qr <- full zero
+    #qr[abs(x-0.5)<delta/2] <- exp(-1/(1-(2/delta*(x-1/2))^2))/0.444*2/delta
     
     # Use the following two lines if you want a step function
     # qr <- rep(0, length(x))
@@ -120,7 +131,15 @@ plot(x, psi, type="l", lwd=3,
      xlab="x", ylab=expression(Psi(x)))
 
 
+#write(x,"solnsteplogx.txt");
+#write(psi,"solnsteplogy.txt");
+
 ###################### new code addition is below ##################
+
+#write(x,"solxRnewfun.txt");
+#write(psi,"solyRnewfun.txt");
+m0
+
 
 #Get space step size (this only works when uselog==FALSE)
 
@@ -188,3 +207,27 @@ growthterm[2] <-0
 DpsiDt <- birthterm+growthterm+linterm
 
 plot(x,DpsiDt)
+
+plot(x,sapply(x,q))
+
+
+plot(x,birthterm)
+
+birthterm <-sapply(x, function(w) 2*dx*sum(k*psi*sapply(w/x,q)/(x)))
+
+plot(x,k)
+
+2*dx*sum(k*psi*sapply(0.5/x,q)/(x))
+
+tail(k*psi*sapply(0.5/x,q)/x)
+
+2*dx*sum(k*psi*sapply(0.5/x,q)/x)
+
+dx
+
+2*dx*sum(k*psi*sapply(0.282/x,q)/x)
+
+
+head(birthterm)
+
+
