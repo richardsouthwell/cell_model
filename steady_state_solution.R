@@ -131,8 +131,8 @@ plot(x, psi, type="l", lwd=3,
      xlab="x", ylab=expression(Psi(x)))
 
 
-#write(x,"solnsteplogx.txt");
-#write(psi,"solnsteplogy.txt");
+write(x,"solnsteplogx2.txt");
+write(psi,"solnsteplogy2.txt");
 
 ###################### new code addition is below ##################
 
@@ -208,26 +208,37 @@ DpsiDt <- birthterm+growthterm+linterm
 
 plot(x,DpsiDt)
 
-plot(x,sapply(x,q))
 
 
-plot(x,birthterm)
-
-birthterm <-sapply(x, function(w) 2*dx*sum(k*psi*sapply(w/x,q)/(x)))
-
-plot(x,k)
-
-2*dx*sum(k*psi*sapply(0.5/x,q)/(x))
-
-tail(k*psi*sapply(0.5/x,q)/x)
-
-2*dx*sum(k*psi*sapply(0.5/x,q)/x)
-
-dx
-
-2*dx*sum(k*psi*sapply(0.282/x,q)/x)
 
 
-head(birthterm)
+######################computing birth term using Riemann sum################
+
+xvals=log(x);
+dxlog=xvals[2]-xvals[1]
+
+# Really I should discard the last term when computing Riemann sum, but I think
+# this term is zero anyway
+
+birthlogRiemann=sapply(xvals, function(xchosen) 2*dxlog*sum(k*psi*sapply(exp(xchosen-xvals),q)))
+plot(exp(xvals),birthlogRiemann)
+
+plot(x,birthlogRiemann)
+
+############################################# computing birth term using fft #############
+
+
+Fq=fft(sapply(xvals, function(xchosen) q(exp(xchosen))))
+Fkpsi=fft(k*psi)
+
+### I should discard the last term again, also I should pad, but I have tried playing around with padding, and not seen much difference. 
+
+birthlogF=2*dxlog*Re(fft(Fq*Fkpsi, inverse = TRUE)/(length(xvals)))
+
+plot(x,birthlogRiemann)
+plot(x,birthlogF-birthlogRiemann)
+
+
+
 
 
