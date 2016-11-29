@@ -24,23 +24,18 @@ a <- 0.7; b <- 0.5;
 alpha <- 0.85; beta <- 1;
 xa <- 0.7;  # threshold for duplication
 delta <- 0.2  # width of offspring size distribution
-
-xp <- 0.5 + delta/2  # x_+ is maximum size of offspring
 xmin <- xa*(1-delta)/2  # Smallest possible cell size
 
-Nx <- 2047  # Choose number of steps
+Nx <- 1024  # Choose number of steps
 uselog <- TRUE
 if (uselog) {
     y <- seq(log(xmin), 0, length.out = Nx+1)
     x <- exp(y)
-    # We rescale x to make sure it includes the point xp
-    x <- x/min(x[x>=xp])*xp
-    
 } else {
     x <- seq(xmin, 1, length.out = Nx+1)
-    # We will shift x to make sure it includes the point xp
-    x <- x - min(x[x>=xp]) + xp
 }
+
+xp <- min(x[x>=(0.5 + delta/2)])  # the point at which we glue
 
 # Growth rate
 g <- a*x^alpha-b*x^beta
