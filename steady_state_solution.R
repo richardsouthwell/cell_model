@@ -24,26 +24,18 @@ a <- 0.7; b <- 0.5;
 alpha <- 0.85; beta <- 1;
 xa <- 0.7;  # threshold for duplication
 delta <- 0.2  # width of offspring size distribution
-
-xp <- 0.5 + delta/2  # x_+ is maximum size of offspring
 xmin <- xa*(1-delta)/2  # Smallest possible cell size
 
-Nx <- 1440  # Choose number of steps
+Nx <- 1024  # Choose number of steps
 uselog <- TRUE
 if (uselog) {
     y <- seq(log(xmin), 0, length.out = Nx+1)
-    # We will shift x to make sure it includes the point xp
-    # y <- y - min(y[y>=log(xp)]) + log(xp)
     x <- exp(y)
-    x <- x/min(x[x>=xp])*xp
-    
 } else {
     x <- seq(xmin, 1, length.out = Nx+1)
-    # We will shift x to make sure it includes the point xp
-    x <- x - min(x[x>=xp]) + xp
 }
 
-
+xp <- min(x[x>=(0.5 + delta/2)])  # the point at which we glue
 
 # Growth rate
 g <- a*x^alpha-b*x^beta
@@ -51,14 +43,9 @@ g <- a*x^alpha-b*x^beta
 q <- function(x) {
     # Make q nonzero only between (1-delta)/2 and (1+delta)/2
     # Here we use a smooth bump function
-    #qr <- exp(-1/(1-(2/delta*(x-1/2))^2))/0.444*2/delta
-    #qr[abs(x-0.5)>delta/2] <- 0
-    
     qr <- exp(-1/(1-(2/delta*(x-1/2))^2))/0.444*2/delta
-    qr[abs(x-0.5)>=delta/2] <- 0
-    
-    #qr <- full zero
-    #qr[abs(x-0.5)<delta/2] <- exp(-1/(1-(2/delta*(x-1/2))^2))/0.444*2/delta
+    qr[abs(x-0.5)>=delta/2] <- 0  # Note that we need >= instead of just >
+    # to avoid the singularity in the argument to the exponential
     
     # Use the following two lines if you want a step function
     # qr <- rep(0, length(x))
@@ -69,7 +56,7 @@ q <- function(x) {
 
 # Use a k that stays finite but is large enough to ensure that
 # almost all cells duplicate before reaching x=1
-k <- 10000*(x-xa)^4#/(1-x+0.01)
+k <- 10000*(x-xa)^4
 k[x<xa] <- 0
 
 p <- function(m0) {
@@ -131,10 +118,10 @@ plot(x, psi, type="l", lwd=3,
      xlab="x", ylab=expression(Psi(x)))
 
 
+###################### new code addition is below ##################
+
 write(x,"solnsteplogx2.txt");
 write(psi,"solnsteplogy2.txt");
-
-###################### new code addition is below ##################
 
 #write(x,"solxRnewfun.txt");
 #write(psi,"solyRnewfun.txt");
@@ -220,10 +207,9 @@ dxlog=xvals[2]-xvals[1]
 # Really I should discard the last term when computing Riemann sum, but I think
 # this term is zero anyway
 
-birthlogRiemann=sapply(xvals, function(xchosen) 2*dxlog*sum(k*psi*sapply(exp(xchosen-xvals),q)))
-plot(exp(xvals),birthlogRiemann)
+birthlogRiemann=sapply(x, function(xchosen) 2*dxlog*sum(k*psi*q(xchosen/x)))
 
-plot(x,birthlogRiemann)
+plot(x, birthlogRiemann, type="l")
 
 ############################################# computing birth term using fft #############
 
@@ -231,14 +217,19 @@ plot(x,birthlogRiemann)
 Fq=fft(sapply(xvals, function(xchosen) q(exp(xchosen))))
 Fkpsi=fft(k*psi)
 
+FqR=fft(rev(sapply(xvals, function(xchosen) q(exp(xchosen)))))
+FkpsiR=fft(rev(k*psi))
+
+
 ### I should discard the last term again, also I should pad, but I have tried playing around with padding, and not seen much difference. 
 
 birthlogF=2*dxlog*Re(fft(Fq*Fkpsi, inverse = TRUE)/(length(xvals)))
 
-plot(x,birthlogRiemann)
-plot(x,birthlogF-birthlogRiemann)
+birthlogF2=rev(2*dxlog*Re(fft(FqR*FkpsiR, inverse = TRUE)/(length(xvals))))
 
 
 
+plot(x, birthlogRiemann, type="l")
+plot(x, birthlogF2-birthlogRiemann, type="l")
 
 
