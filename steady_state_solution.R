@@ -12,7 +12,7 @@ intx <- function(f, x) {
     #      either increasing or decreasing order.
     #
     # Returns:
-    #   vector of values of integral over f at points given by x
+    #   vector of values of integral over f at points given by x 
     #
     # The integration starts at the first value in x, so first
     # value in the returned vector is zero.
