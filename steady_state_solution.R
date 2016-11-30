@@ -1,7 +1,10 @@
 library("Matrix")
+library("deSolve")
+library("rgl")
+
 
 intx <- function(f, x) {
-    # Use trapezoidal rule for integration
+    # Use trapezoidal rule for integration 
     #
     # Args:
     #   f: value of function at points given by x
@@ -9,7 +12,7 @@ intx <- function(f, x) {
     #      either increasing or decreasing order.
     #
     # Returns:
-    #   vector of values of integral over f at points given by x
+    #   vector of values of integral over f at points given by x 
     #
     # The integration starts at the first value in x, so first
     # value in the returned vector is zero.
@@ -26,7 +29,7 @@ xa <- 0.7;  # threshold for duplication
 delta <- 0.2  # width of offspring size distribution
 xmin <- xa*(1-delta)/2  # Smallest possible cell size
 
-Nx <- 1024  # Choose number of steps
+Nx <- 2047  # Choose number of steps
 uselog <- TRUE
 if (uselog) {
     y <- seq(log(xmin), 0, length.out = Nx+1)
@@ -120,15 +123,7 @@ plot(x, psi, type="l", lwd=3,
 
 ###################### new code addition is below ##################
 
-write(x,"solnsteplogx2.txt");
-write(psi,"solnsteplogy2.txt");
-
-#write(x,"solxRnewfun.txt");
-#write(psi,"solyRnewfun.txt");
-m0
-
-
-#Get space step size (this only works when uselog==FALSE)
+#I asume uselog==False, so I switch off the non-spectral stuff
 
 dx=x[2]-x[1]
 
@@ -136,54 +131,28 @@ dx=x[2]-x[1]
 #Use Riemann sum to work out birth term
 
 
-birthterm <-sapply(x, function(w) 2*dx*sum(k*psi*sapply(w/x,q)/(x)))
+#birthterm <-sapply(x, function(w) 2*dx*sum(k*psi*sapply(w/x,q)/(x)))
 
-
-
-
-
-#Use central differencing, assuming Z is zero at either end
-
-
-#centraldiffwZeroes2 <- function(Z,dx){
-#  outputtt <- rep(0,length(Z));
-#  for (i in 1:length(Z)) {
-#    outputtt[i] <- if (i==1) {
-#      0
-#    } else {
-#      if (i==length(Z)) {
-#        0
-#      } else {
-#        (Z[i+1]-Z[i-1])/(2*dx)
-#      }
-#    }
-#  }
-#return(outputtt)
-#}
 
 # compute linear term equal to minus psi(k(w)+m)
 
-linterm <- -k*psi-m0*psi
+#linterm <- -k*psi-m0*psi
 
 
 #Make 4th order differentiation matrix D for computing growth term
 
-NNN=length(x);
-D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
-D <- (D-t(D))/dx;
+#NNN=length(x);
+#D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
+#D <- (D-t(D))/dx;
 
 #Multilply g*psi by D to get growth term
 
-growthterm <- -D %*% (g*psi)
+#growthterm <- -D %*% (g*psi)
 #Manually set growth term to zero for extreme w values
 
-growthterm[1] <-0
-growthterm[2] <-0
-#growthterm[length(growthterm3)] <-0
-#growthterm[length(growthterm3)-1] <-0
+#growthterm[1] <-0
+#growthterm[2] <-0
 
-#growthterm[length(growthterm3)-2] <-0
-#growthterm[length(growthterm3)-3] <-0
 
 
 #note since it is a 4th order method, it may not be handelling the boundaries properly
@@ -191,10 +160,11 @@ growthterm[2] <-0
 
 #pde rhs is sum of birth, growth and linear terms
 
-DpsiDt <- birthterm+growthterm+linterm
+#DpsiDt <- birthterm+growthterm+linterm
 
-plot(x,DpsiDt)
+#plot(x,DpsiDt)
 
+#plot(x,birthterm)
 
 
 
@@ -207,24 +177,90 @@ dxlog=xvals[2]-xvals[1]
 # Really I should discard the last term when computing Riemann sum, but I think
 # this term is zero anyway
 
-birthlogRiemann=sapply(x, function(xchosen) 2*dxlog*sum(k*psi*q(xchosen/x)))
+#I turn off this part for the sake of speed up, because it was mainly done for testing
 
-plot(x, birthlogRiemann, type="l")
+#birthlogRiemann=sapply(x, function(xchosen) 2*dxlog*sum(k*psi*q(xchosen/x)))
+
+#plot(x, birthlogRiemann, type="l")
 
 ############################################# computing birth term using fft #############
 
 
-Fq=fft(sapply(xvals, function(xchosen) q(exp(xchosen))))
-Fkpsi=fft(k*psi)
+#computing fft s of reversals of components of convolution integral
 
-### I should discard the last term again, also I should pad, but I have tried playing around with padding, and not seen much difference. 
-
-birthlogF=2*dxlog*Re(fft(Fq*Fkpsi, inverse = TRUE)/(length(xvals)))
-
-plot(x, birthlogRiemann, type="l")
-plot(x, birthlogF-birthlogRiemann, type="l")
+FqR=fft(rev(sapply(xvals, function(xchosen) q(exp(xchosen)))))
+FkpsiR=fft(rev(k*psi))
 
 
+#I comment out the code below that is mainly for testing
 
+#birthlogF2=rev(2*dxlog*Re(fft(FqR*FkpsiR, inverse = TRUE)/(length(xvals))))
+#plot(x, birthlogRiemann, type="l")
+#plot(x, birthlogF2-birthlogRiemann, type="l")
+
+
+
+############################# log growth term 4th order difference
+
+# I comment out this code which computes the spatial derivatitives up to 4th order via matrix multiplication, although I still wonder if this is better than 
+# the fft based approach I used in the code since there is a small discrepency between the two, although I'm hoping it is the fft approach which is more accurate.
+
+#dxxx=xvals[2]-xvals[1]
+#NNN=length(x);
+#D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
+#D <- (D-t(D))/dxxx;
+#growthtermlog <- (-D %*% (g*psi))/x
+#growthtermlog[1] <-0
+#growthtermlog[2] <-0
+
+
+############################# log growth term, Fourier method (double reverse)
+
+
+#I comment out this part, which is mainly for testing
+
+#Fgrowthlog=(2*pi/(max(xvals)-min(xvals)))*rev(Re(fft(fft(rev(g*psi))*(1i*c(0:(length(g)/2-1),0,(-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x
+#plot(x,Fgrowthlog-growthtermlog)
+
+#############compute linear term and combine to get d psi/dt
+
+#I comment out this part, which is mainly for testing
+
+
+#lintermlog <- -k*psi-m0*psi
+#derpsilog=lintermlog+growthtermlog+birthlogRiemann
+#plot(x,derpsilog)
+
+##################################pde solver
+
+#this is the core of the PDE solver, it determines p psi/dt using spectral methods
+
+
+fff <- function(t, psi, parms) {
+    list(
+        #((-D %*% (g*psi))/x)+
+        (2*pi/(max(xvals)-min(xvals)))*rev(Re(fft(fft(rev(g*psi))*(1i*c(0:(length(g)/2-1),0,(-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x+
+            (-k*psi-m0*psi)+
+            rev(2*dxlog*Re(fft(FqR*(fft(rev(k*psi))), inverse = TRUE)/(length(xvals))))
+    )
+}
+
+#The rest of the code runs this and plots it
+
+tmax <- 20  # final time
+Nt <- 50    # number of time steps at which to store intermediate values
+t <- seq(0, tmax, by=tmax/Nt)
+parms <- list(dog=5)
+
+#Our input rpsi is a random pertubation of the solution generated by the code at the start
+
+rpsi=psi+0.05*runif(length(psi))
+
+out <- ode(y=rpsi, times=t, func=fff, parms=parms)
+
+sselectx <- seq(2, length(x), by=1)
+xss <- x[sselectx]
+yss <- out[,sselectx]
+persp3d(t, xss, yss, col = "lightblue")
 
 
