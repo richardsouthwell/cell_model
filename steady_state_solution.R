@@ -4,7 +4,7 @@ library("rgl")
 
 
 intx <- function(f, x) {
-    # Use trapezoidal rule for integration
+    # Use trapezoidal rule for integration 
     #
     # Args:
     #   f: value of function at points given by x
