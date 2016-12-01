@@ -142,7 +142,8 @@ dx=x[2]-x[1]
 #Make 4th order differentiation matrix D for computing growth term
 
 #NNN=length(x);
-#D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
+#D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-
+#sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
 #D <- (D-t(D))/dx;
 
 #Multilply g*psi by D to get growth term
@@ -155,7 +156,8 @@ dx=x[2]-x[1]
 
 
 
-#note since it is a 4th order method, it may not be handelling the boundaries properly
+#note since it is a 4th order method, it may not be handelling
+#the boundaries properly
 
 
 #pde rhs is sum of birth, growth and linear terms
@@ -169,7 +171,7 @@ dx=x[2]-x[1]
 
 
 
-######################computing birth term using Riemann sum################
+######################computing birth term using Riemann sum##############
 
 xvals=log(x);
 dxlog=xvals[2]-xvals[1]
@@ -177,13 +179,14 @@ dxlog=xvals[2]-xvals[1]
 # Really I should discard the last term when computing Riemann sum, but I think
 # this term is zero anyway
 
-#I turn off this part for the sake of speed up, because it was mainly done for testing
+#I turn off this part for the sake of speed up, because 
+#it was mainly done for testing
 
 #birthlogRiemann=sapply(x, function(xchosen) 2*dxlog*sum(k*psi*q(xchosen/x)))
 
 #plot(x, birthlogRiemann, type="l")
 
-############################################# computing birth term using fft #############
+################################# computing birth term using fft ###########
 
 
 #computing fft s of reversals of components of convolution integral
@@ -200,12 +203,17 @@ dxlog=xvals[2]-xvals[1]
 
 ############################# log growth term 4th order difference
 
-# I comment out this code which computes the spatial derivatitives up to 4th order via matrix multiplication, although I still wonder if this is better than 
-# the fft based approach I used in the code since there is a small discrepency between the two, although I'm hoping it is the fft approach which is more accurate.
+# I comment out this code which computes
+#the spatial derivatitives up to 4th order via matrix multiplication,
+#although I still wonder if this is better than 
+# the fft based approach I used in the code since there is a small
+#discrepency between the two,
+#although I'm hoping it is the fft approach which is more accurate.
 
 #dxxx=xvals[2]-xvals[1]
 #NNN=length(x);
-#D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
+#D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-
+#sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
 #D <- (D-t(D))/dxxx;
 #growthtermlog <- (-D %*% (g*psi))/x
 #growthtermlog[1] <-0
@@ -217,13 +225,16 @@ dxlog=xvals[2]-xvals[1]
 
 
 
-# I dont use this anymore, but the code below uses matrix multiplication to get the derivatives, note the output object is a matrix, so it needs to be converted back 
+# I dont use this anymore, but the code below uses matrix multiplication
+#to get the derivatives, note the output object is a matrix, so
+#it needs to be converted back 
 # for some purposes.
 
 #hpp=rep(1, length(x))
 #dxxx=xvals[2]-xvals[1]
 #NNN=length(x);
-#D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
+#D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-
+#sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
 #D <- (D-t(D))/dxxx;
 #getgrowthterm2 <- function(psi) {
 #    growthtermlog <- (-D %*% (g*psi))/x
@@ -234,12 +245,14 @@ dxlog=xvals[2]-xvals[1]
 #}
 
 
-############################# log growth term, Fourier method (double reverse)
+#################### log growth term, Fourier method (double reverse)
 
 
 #I comment out this part, which is mainly for testing
 
-#Fgrowthlog=(2*pi/(max(xvals)-min(xvals)))*rev(Re(fft(fft(rev(g*psi))*(1i*c(0:(length(g)/2-1),0,(-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x
+#Fgrowthlog=(2*pi/(max(xvals)-min(xvals)))*rev(
+#Re(fft(fft(rev(g*psi))*(1i*c(0:(length(g)/2-1),0,(
+#-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x
 #plot(x,Fgrowthlog-growthtermlog)
 
 #############compute linear term and combine to get d psi/dt
@@ -252,7 +265,9 @@ dxlog=xvals[2]-xvals[1]
 #plot(x,derpsilog)
 
 
-#I changed it so we throw away the first term, and take xval[2]... end as the Nx points over one period, note this change has not been done with commented out test code
+#I changed it so we throw away the first term, and take xval[2]... end
+#as the Nx points over one period, note this change has not been
+#done with commented out test code
 
 
 
@@ -260,9 +275,12 @@ FqR=fft(rev(sapply(xvals[-1], function(xchosen) q(exp(xchosen)))))
 FkpsiR=fft(rev(k[-1]*psi[-1]))
 
 
-derpsilog2=   (2*pi/(max(xvals)-min(xvals)))*rev(Re(fft(fft(rev(g[-1]*psi[-1]))*(1i*c(0:(length(g[-1])/2-1),0,(-length(g[-1])/2+1):-1)), inverse=TRUE)/length(g[-1])))/x[-1]+
+derpsilog2=   (2*pi/(max(xvals)-min(xvals)))*rev(Re(fft(fft(
+    rev(g[-1]*psi[-1]))*(1i*c(0:(length(g[-1])/2-1),0,(-length(g[-1])/2+1):-1)),
+    inverse=TRUE)/length(g[-1])))/x[-1]+
     (-k[-1]*psi[-1]-m0*psi[-1])+
-    rev(2*(max(xvals)-min(xvals))/(length(psi[-1]))*Re(fft(FqR*(fft(rev(k[-1]*psi[-1]))), inverse = TRUE)/(length(xvals[-1]))))
+    rev(2*(max(xvals)-min(xvals))/(length(psi[-1]))*Re(
+        fft(FqR*(fft(rev(k[-1]*psi[-1]))), inverse = TRUE)/(length(xvals[-1]))))
 
 
 plot(x[-1],derpsilog2)
@@ -271,16 +289,21 @@ plot(x[-1],derpsilog2)
 
 ##################################pde solver
 
-#this is the core of the PDE solver, it determines p psi/dt using spectral methods
+#this is the core of the PDE solver,
+#it determines d psi/dt using spectral methods
 
 
 
 
 fff <- function(t, psis, parms) {
     list(
-        (2*pi/(max(xvals)-min(xvals)))*rev(Re(fft(fft(rev(g[-1]*psis))*(1i*c(0:(length(g[-1])/2-1),0,(-length(g[-1])/2+1):-1)), inverse=TRUE)/length(g[-1])))/x[-1]+
+        (2*pi/(max(xvals)-min(xvals)))*rev(Re(fft(fft(rev(g[-1]*psis))*(
+            1i*c(0:(length(g[-1])/2-1),0,(-length(g[-1])/2+1):-1)),
+            inverse=TRUE)/length(g[-1])))/x[-1]+
             (-k[-1]*psis-m0*psis)+
-            rev(2*(max(xvals)-min(xvals))/(length(psis))*Re(fft(FqR*(fft(rev(k[-1]*psis))), inverse = TRUE)/(length(xvals[-1]))))
+            rev(2*(max(xvals)-min(xvals))/(length(psis))*
+                    Re(fft(FqR*(fft(rev(k[-1]*psis))),
+                           inverse = TRUE)/(length(xvals[-1]))))
         
     )
 }
@@ -299,7 +322,8 @@ parms <- list(dog=5)
 
 spsi=psi[-1]
 
-#Our input rpsi is a random pertubation of the solution generated by the code at the start
+#Our input rpsi is a random pertubation of the solution
+#generated by the code at the start
 
 rpsi=spsi+0.05*runif(length(spsi))
 
@@ -318,7 +342,9 @@ persp3d(t, xss, yss, col = "lightblue")
 #Testing spectral derivatives
 #Ga=getgrowthterm2(psi);
 
-#Gc=(2*pi/(max(xvals)-min(xvals)+xvals[2]-xvals[1]))*rev(Re(fft(fft(rev(g*psi))*(1i*c(0:(length(g)/2-1),0,(-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x
+#Gc=(2*pi/(max(xvals)-min(xvals)+xvals[2]-xvals[1]))*rev(
+#Re(fft(fft(rev(g*psi))*(1i*c(0:(
+#length(g)/2-1),0,(-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x
 
 
 #plot(x,Ga-Gc)
