@@ -4,7 +4,7 @@ library("rgl")
 
 
 intx <- function(f, x) {
-    # Use trapezoidal rule for integration 
+    # Use trapezoidal rule for integration
     #
     # Args:
     #   f: value of function at points given by x
@@ -12,7 +12,7 @@ intx <- function(f, x) {
     #      either increasing or decreasing order.
     #
     # Returns:
-    #   vector of values of integral over f at points given by x 
+    #   vector of values of integral over f at points given by x
     #
     # The integration starts at the first value in x, so first
     # value in the returned vector is zero.
@@ -214,6 +214,28 @@ FkpsiR=fft(rev(k*psi))
 #growthtermlog[2] <-0
 
 
+#function to determine growth term
+
+
+
+
+# I dont use this anymore, but the code below uses matrix multiplication to get the derivatives, note the output object is a matrix, so it needs to be converted back 
+# for some purposes.
+
+hpp=rep(1, length(x))
+dxxx=xvals[2]-xvals[1]
+NNN=length(x);
+D <- sparseMatrix((1:NNN), c((2:NNN),1), x = 2*rep(1, NNN)/3)-sparseMatrix((1:NNN), c((3:NNN),1,2), x = rep(1, NNN)/12)
+D <- (D-t(D))/dxxx;
+getgrowthterm2 <- function(psi) {
+    growthtermlog <- (-D %*% (g*psi))/x
+    for (i in 1:length(x)) {
+        hpp[i]=growthtermlog[i]
+    }
+    return(hpp)
+}
+
+
 ############################# log growth term, Fourier method (double reverse)
 
 
@@ -231,19 +253,32 @@ FkpsiR=fft(rev(k*psi))
 #derpsilog=lintermlog+growthtermlog+birthlogRiemann
 #plot(x,derpsilog)
 
+
+derpsilog2=   (2*pi/(max(xvals)-min(xvals)+xvals[2]-xvals[1]))*rev(Re(fft(fft(rev(g*psi))*(1i*c(0:(length(g)/2-1),0,(-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x+
+    (-k*psi-m0*psi)+
+    rev(2*dxlog*Re(fft(FqR*(fft(rev(k*psi))), inverse = TRUE)/(length(xvals))))
+
+plot(x,derpsilog2)
+
+
+
 ##################################pde solver
 
 #this is the core of the PDE solver, it determines p psi/dt using spectral methods
 
 
+
+
 fff <- function(t, psi, parms) {
     list(
-        #((-D %*% (g*psi))/x)+
-        (2*pi/(max(xvals)-min(xvals)))*rev(Re(fft(fft(rev(g*psi))*(1i*c(0:(length(g)/2-1),0,(-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x+
+        (2*pi/(max(xvals)-min(xvals)+xvals[2]-xvals[1]))*rev(Re(fft(fft(rev(g*psi))*(1i*c(0:(length(g)/2-1),0,(-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x+
             (-k*psi-m0*psi)+
             rev(2*dxlog*Re(fft(FqR*(fft(rev(k*psi))), inverse = TRUE)/(length(xvals))))
     )
 }
+
+
+
 
 #The rest of the code runs this and plots it
 
@@ -256,6 +291,8 @@ parms <- list(dog=5)
 
 rpsi=psi+0.05*runif(length(psi))
 
+psigauss=exp(-100*(x - 0.6)^2)
+
 out <- ode(y=rpsi, times=t, func=fff, parms=parms)
 
 sselectx <- seq(2, length(x), by=1)
@@ -263,4 +300,14 @@ xss <- x[sselectx]
 yss <- out[,sselectx]
 persp3d(t, xss, yss, col = "lightblue")
 
+
+
+
+#Testing spectral derivatives
+Ga=getgrowthterm2(psi);
+
+Gc=(2*pi/(max(xvals)-min(xvals)+xvals[2]-xvals[1]))*rev(Re(fft(fft(rev(g*psi))*(1i*c(0:(length(g)/2-1),0,(-length(g)/2+1):-1)), inverse=TRUE)/length(g)))/x
+
+
+plot(x,Ga-Gc)
 
